@@ -56,7 +56,7 @@ lookalike undo ~/lookalike-extras/lookalike-undo-20261001-142530.tsv
 | `forget FOLDER` | Drops the cache and the NuclaDB tenant for FOLDER. Photos are not touched. |
 | `eval FOLDER` | Measures grouping on edited copies of the photos in FOLDER. See below. |
 
-JPEG, PNG and GIF are read. Hidden files and folders are skipped.
+JPEG, PNG, GIF and WebP are read. Hidden files and folders are skipped.
 
 Environment: `NUCLADB_URL` (default `http://localhost:8080`),
 `NUCLADB_API_KEY`, `LOOKALIKE_CACHE` (default: your user cache directory).
@@ -147,7 +147,7 @@ Works:
   set.
 
 Known limits:
-- No HEIC, WebP or RAW. Convert first, or those photos are skipped.
+- No HEIC or RAW. Convert first, or those photos are skipped.
 - Mirrored copies are not matched, even with `-rotated`.
 - Crops beyond about 10% per side are mostly missed.
 - Grouping is single linkage: a long burst of slowly changing shots can

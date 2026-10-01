@@ -8,6 +8,8 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+
+	_ "golang.org/x/image/webp"
 	"os"
 )
 
@@ -17,7 +19,7 @@ type Info struct {
 	Vector        []float32
 }
 
-// Load decodes a JPEG, PNG or GIF file and fingerprints it.
+// Load decodes a JPEG, PNG, GIF or WebP file and fingerprints it.
 func Load(path string) (Info, error) {
 	f, err := os.Open(path)
 	if err != nil {

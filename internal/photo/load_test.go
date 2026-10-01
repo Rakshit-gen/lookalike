@@ -87,6 +87,19 @@ func TestLoadMatchesCopiesOfTheSamePhoto(t *testing.T) {
 	}
 }
 
+// The fixtures are the same 192x128 photo saved as PNG and as lossy WebP
+// at quality 60, the way chat apps on Android often save received photos.
+func TestLoadReadsWebP(t *testing.T) {
+	png := load(t, "testdata/parrots.png")
+	webp := load(t, "testdata/parrots.webp")
+	if webp.Width != 192 || webp.Height != 128 {
+		t.Fatalf("size %dx%d", webp.Width, webp.Height)
+	}
+	if c := cosine(png.Vector, webp.Vector); c < 0.98 {
+		t.Fatalf("similarity %.4f", c)
+	}
+}
+
 func TestLoadAppliesOrientation(t *testing.T) {
 	dir := t.TempDir()
 	upright := scene(400, 300)

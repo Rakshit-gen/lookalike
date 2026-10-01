@@ -1,3 +1,5 @@
 module github.com/Rakshit-gen/lookalike
 
-go 1.25
+go 1.25.0
+
+require golang.org/x/image v0.40.0
