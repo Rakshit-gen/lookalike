@@ -6,6 +6,7 @@ import (
 
 	"github.com/Rakshit-gen/lookalike/internal/library"
 	"github.com/Rakshit-gen/lookalike/internal/nucla"
+	"github.com/Rakshit-gen/lookalike/internal/photo"
 )
 
 // Group is a set of photos that look alike. Photos[0] is the one to keep:
@@ -22,6 +23,10 @@ type Group struct {
 type Options struct {
 	Threshold float64 // minimum cosine similarity between two photos
 	Neighbors int     // how many nearest photos to look at for each one
+	// Rotated also catches copies whose pixels were turned a quarter or
+	// half turn, by searching with each photo's fingerprint rotated three
+	// ways. It makes Find four times slower.
+	Rotated bool
 }
 
 // Find asks NuclaDB for each photo's nearest neighbours and joins every
@@ -59,9 +64,19 @@ func Find(ctx context.Context, db *nucla.Client, l *library.Library, opt Options
 	// hundreds of thousands.
 	var edges []edge
 	for i, e := range entries {
-		ms, err := db.Search(ctx, Tenant(l), e.Vector, opt.Neighbors+1)
-		if err != nil {
-			return nil, err
+		queries := [][]float32{e.Vector}
+		if opt.Rotated {
+			for _, o := range []int{6, 3, 8} {
+				queries = append(queries, photo.Transform(e.Vector, o))
+			}
+		}
+		var ms []nucla.Match
+		for _, q := range queries {
+			found, err := db.Search(ctx, Tenant(l), q, opt.Neighbors+1)
+			if err != nil {
+				return nil, err
+			}
+			ms = append(ms, found...)
 		}
 		for _, m := range ms {
 			j, ok := byID[m.ID]

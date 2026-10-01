@@ -8,6 +8,7 @@ import (
 	"github.com/Rakshit-gen/lookalike/internal/library"
 	"github.com/Rakshit-gen/lookalike/internal/nucla"
 	"github.com/Rakshit-gen/lookalike/internal/nucla/nuclafake"
+	"github.com/Rakshit-gen/lookalike/internal/photo"
 )
 
 func TestFindGroupsAndPicksKeeper(t *testing.T) {
@@ -55,5 +56,33 @@ func TestFindGroupsAndPicksKeeper(t *testing.T) {
 	// Same pixel count, so the bigger file (the PNG) is kept.
 	if dog.Photos[0].Path != "dog-copy.png" {
 		t.Fatalf("dog keeper %s", dog.Photos[0].Path)
+	}
+}
+
+func TestFindRotatedCatchesTurnedCopies(t *testing.T) {
+	fake := nuclafake.New()
+	defer fake.Close()
+	db := nucla.New(fake.URL)
+	ctx := context.Background()
+
+	upright := make([]float32, photo.Dim)
+	for i := range upright {
+		upright[i] = float32((i*37)%11) - 5
+	}
+	l := &library.Library{Root: "/photos", Entries: map[string]*library.Entry{
+		"a.jpg":         {Path: "a.jpg", Vector: upright},
+		"a-rotated.jpg": {Path: "a-rotated.jpg", Vector: photo.Transform(upright, 8)},
+	}}
+	var all []*library.Entry
+	for _, e := range l.Entries {
+		all = append(all, e)
+	}
+	if err := Push(ctx, db, l, library.Changes{Fingerprinted: all}); err != nil {
+		t.Fatal(err)
+	}
+	plain, _ := Find(ctx, db, l, Options{Threshold: 0.9, Neighbors: 5})
+	rotated, _ := Find(ctx, db, l, Options{Threshold: 0.9, Neighbors: 5, Rotated: true})
+	if len(plain) != 0 || len(rotated) != 1 {
+		t.Fatalf("plain %d groups, rotated %d groups", len(plain), len(rotated))
 	}
 }

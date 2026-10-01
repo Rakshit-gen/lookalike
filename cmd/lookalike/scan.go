@@ -68,6 +68,7 @@ func openLibrary(ctx context.Context, folder string) (*library.Library, error) {
 func runScan(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("scan", flag.ExitOnError)
 	threshold := fs.Float64("min", defaultThreshold, "minimum similarity (0 to 1) for two photos to be grouped")
+	rotated := fs.Bool("rotated", false, "also match copies turned a quarter or half turn (4x slower)")
 	fs.Usage = func() {
 		fmt.Fprint(os.Stderr, "usage: lookalike scan [flags] FOLDER\n\n")
 		fs.PrintDefaults()
@@ -81,7 +82,7 @@ func runScan(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	groups, err := group.Find(ctx, nuclaClient(), lib, group.Options{Threshold: *threshold, Neighbors: 10})
+	groups, err := group.Find(ctx, nuclaClient(), lib, group.Options{Threshold: *threshold, Neighbors: 10, Rotated: *rotated})
 	if err != nil {
 		return err
 	}
