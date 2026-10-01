@@ -54,6 +54,9 @@ func Find(ctx context.Context, db *nucla.Client, l *library.Library, opt Options
 		a, b int
 		sim  float64
 	}
+	// ponytail: one search per photo, sequential. About 2 ms each against a
+	// local NuclaDB; run them concurrently if libraries get into the
+	// hundreds of thousands.
 	var edges []edge
 	for i, e := range entries {
 		ms, err := db.Search(ctx, Tenant(l), e.Vector, opt.Neighbors+1)
@@ -65,10 +68,10 @@ func Find(ctx context.Context, db *nucla.Client, l *library.Library, opt Options
 			if !ok || j == i {
 				continue
 			}
-			if sim := 1 - float64(m.Score); sim >= opt.Threshold && i < j {
+			// Each pair is usually found from both ends; the second copy
+			// of the edge changes nothing.
+			if sim := 1 - float64(m.Score); sim >= opt.Threshold {
 				edges = append(edges, edge{i, j, sim})
-			} else if sim >= opt.Threshold && i > j {
-				edges = append(edges, edge{j, i, sim})
 			}
 		}
 	}
