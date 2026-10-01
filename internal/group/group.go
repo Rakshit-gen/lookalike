@@ -59,9 +59,9 @@ func Find(ctx context.Context, db *nucla.Client, l *library.Library, opt Options
 		a, b int
 		sim  float64
 	}
-	// ponytail: one search per photo, sequential. About 2 ms each against a
-	// local NuclaDB; run them concurrently if libraries get into the
-	// hundreds of thousands.
+	// ponytail: one search per photo, sequential. A warm scan of 2000
+	// photos against a local NuclaDB takes 0.23 s in total; run the
+	// searches concurrently if libraries get into the hundreds of thousands.
 	var edges []edge
 	for i, e := range entries {
 		queries := [][]float32{e.Vector}
