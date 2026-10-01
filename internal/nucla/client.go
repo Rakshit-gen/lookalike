@@ -144,3 +144,13 @@ func (c *Client) Search(ctx context.Context, tenant string, query []float32, top
 func (c *Client) Delete(ctx context.Context, tenant, id string) error {
 	return c.do(ctx, http.MethodDelete, "/v1/vectors/"+url.PathEscape(id)+"?tenant_id="+url.QueryEscape(tenant), nil, nil)
 }
+
+// DeleteTenant drops a tenant and all its vectors. A tenant that doesn't
+// exist is not an error.
+func (c *Client) DeleteTenant(ctx context.Context, tenant string) error {
+	err := c.do(ctx, http.MethodDelete, "/v1/tenants/"+url.PathEscape(tenant), nil, nil)
+	if e, ok := err.(*Error); ok && e.Status == http.StatusNotFound {
+		return nil
+	}
+	return err
+}

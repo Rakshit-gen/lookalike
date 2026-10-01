@@ -133,3 +133,18 @@ func TestDeleteSendsTenant(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestDeleteTenantIgnoresMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete || r.URL.Path != "/v1/tenants/gone" {
+			t.Errorf("unexpected %s %s", r.Method, r.URL)
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error":"tenant not found"}`))
+	}))
+	defer srv.Close()
+
+	if err := New(srv.URL).DeleteTenant(context.Background(), "gone"); err != nil {
+		t.Fatal(err)
+	}
+}

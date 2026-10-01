@@ -106,3 +106,15 @@ func (l *Library) Sorted() []*Entry {
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
 	return out
 }
+
+// Forget deletes the cache file for root, if there is one.
+func Forget(dir, root string) error {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(cachePath(dir, abs)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	return nil
+}

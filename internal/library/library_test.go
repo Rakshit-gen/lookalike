@@ -33,3 +33,19 @@ func TestIDsAreStableAndDistinct(t *testing.T) {
 		t.Fatal("library keys collide")
 	}
 }
+
+func TestForget(t *testing.T) {
+	cache, root := t.TempDir(), t.TempDir()
+	l, _ := Open(cache, root)
+	l.Entries["a.jpg"] = &Entry{Path: "a.jpg"}
+	l.Save(cache)
+	if err := Forget(cache, root); err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := Open(cache, root); len(l.Entries) != 0 {
+		t.Fatal("cache survived Forget")
+	}
+	if err := Forget(cache, root); err != nil {
+		t.Fatalf("second Forget: %v", err)
+	}
+}

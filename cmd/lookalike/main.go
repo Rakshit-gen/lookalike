@@ -16,6 +16,7 @@ const usage = `lookalike finds photos that are near copies of each other.
 Usage:
   lookalike scan FOLDER          index the photos in FOLDER and list look-alike groups
   lookalike similar FOLDER PHOTO list the photos in FOLDER that look like PHOTO
+  lookalike forget FOLDER        drop the index and cache for FOLDER (photos are not touched)
 
 Environment:
   NUCLADB_URL      NuclaDB REST address (default http://localhost:8080)
@@ -37,6 +38,8 @@ func main() {
 		err = runScan(ctx, args)
 	case "similar":
 		err = runSimilar(ctx, args)
+	case "forget":
+		err = runForget(ctx, args)
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 		return
