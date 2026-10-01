@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/Rakshit-gen/lookalike/internal/group"
@@ -69,6 +71,7 @@ func runScan(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("scan", flag.ExitOnError)
 	threshold := fs.Float64("min", defaultThreshold, "minimum similarity (0 to 1) for two photos to be grouped")
 	rotated := fs.Bool("rotated", false, "also match copies turned a quarter or half turn (4x slower)")
+	asJSON := fs.Bool("json", false, "print the groups as JSON")
 	fs.Usage = func() {
 		fmt.Fprint(os.Stderr, "usage: lookalike scan [flags] FOLDER\n\n")
 		fs.PrintDefaults()
@@ -85,6 +88,9 @@ func runScan(ctx context.Context, args []string) error {
 	groups, err := group.Find(ctx, nuclaClient(), lib, group.Options{Threshold: *threshold, Neighbors: 10, Rotated: *rotated})
 	if err != nil {
 		return err
+	}
+	if *asJSON {
+		return printJSON(lib.Root, groups)
 	}
 	extra := 0
 	for _, g := range groups {
@@ -113,4 +119,34 @@ func humanSize(n int64) string {
 		return fmt.Sprintf("%.0f KB", float64(n)/(1<<10))
 	}
 	return fmt.Sprintf("%d B", n)
+}
+
+// printJSON writes groups with absolute paths, which is what a script
+// acting on the output needs.
+func printJSON(root string, groups []group.Group) error {
+	type photoJSON struct {
+		Path   string `json:"path"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		Bytes  int64  `json:"bytes"`
+		Keep   bool   `json:"keep"`
+	}
+	type groupJSON struct {
+		Closest float64     `json:"closest"`
+		Loosest float64     `json:"loosest"`
+		Photos  []photoJSON `json:"photos"`
+	}
+	out := make([]groupJSON, 0, len(groups))
+	for _, g := range groups {
+		gj := groupJSON{Closest: g.Closest, Loosest: g.Loosest}
+		for i, p := range g.Photos {
+			gj.Photos = append(gj.Photos, photoJSON{
+				Path: filepath.Join(root, filepath.FromSlash(p.Path)), Width: p.Width, Height: p.Height, Bytes: p.Size, Keep: i == 0,
+			})
+		}
+		out = append(out, gj)
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
 }
