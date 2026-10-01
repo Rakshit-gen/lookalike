@@ -16,6 +16,7 @@ const usage = `lookalike finds photos that are near copies of each other.
 Usage:
   lookalike scan FOLDER          index the photos in FOLDER and list look-alike groups
   lookalike similar FOLDER PHOTO list the photos in FOLDER that look like PHOTO
+  lookalike report FOLDER        write an HTML page showing the groups side by side
   lookalike move FOLDER DEST     move the extra copies to DEST (dry run unless -apply)
   lookalike undo LOGFILE         put back what a move moved
   lookalike forget FOLDER        drop the index and cache for FOLDER (photos are not touched)
@@ -41,6 +42,8 @@ func main() {
 		err = runScan(ctx, args)
 	case "similar":
 		err = runSimilar(ctx, args)
+	case "report":
+		err = runReport(ctx, args)
 	case "move":
 		err = runMove(ctx, args)
 	case "undo":
